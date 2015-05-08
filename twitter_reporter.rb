@@ -28,8 +28,9 @@ class TwitterReporter
   end
 
   # Run the reporter
-  def run (username, password, file_contents, logger, reported, suspended, error)
-    logger.info "Opening FireFox, Please Wait..."
+  def run (username, password, file_contents, logger, reported, suspended, error, thread_id)
+    tname = '#' + thread_id.to_s
+    logger.info '['+tname+']: Opening FireFox, Please Wait...'
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
     # Go to twitter
@@ -55,9 +56,9 @@ class TwitterReporter
         # Is the target suspended?
         if browser.current_url == 'https://twitter.com/account/suspended'
           # notify suspension
-          logger.warn id + ' - Suspended'
+          logger.warn '['+tname+']: '+ id + ' - Suspended'
           # Log suspension
-          suspended.warn id
+          suspended.warn '['+tname+']: '+ id
         else
           # Go to their profile page
           browser.find_element(:xpath, "//*[@id='ft']/a").click
@@ -72,15 +73,15 @@ class TwitterReporter
           # Click done
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-done-button']").click
           # Output the ID
-          logger.info id + ' - Reported'
+          logger.info '['+tname+']: '+ id + ' - Reported'
           # Log the ID
-          reported.info id
+          reported.info '['+tname+']: '+ id
         end
       rescue
         # an error happened so notify
-        logger.error id + ' - Error'
+        logger.error '['+tname+']: '+ id + ' - Error'
         # log the error
-        error.error id
+        error.error '['+tname+']: '+ id
       end
     end
   end
@@ -154,13 +155,15 @@ if Choice[:threads].to_s.strip.to_i.is_a? Integer
 # Get our targets from the specified path and return the contents
   threads = []
   logger.info 'Gathering Targets...'
+  tcount = 0
   open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
+    tcount = tcount + 1
     # create our threads
     threads << Thread.new {
-      logger.info 'Starting new thread...'
+      logger.info 'Starting thread #'+tcount.to_s
       # Run it
-      tr.run(uname, passwd, chunk, logger, reported, suspended, error)
-      logger.info 'Thread has finished!'
+      tr.run(uname, passwd, chunk, logger, reported, suspended, error, tcount)
+      logger.info 'Thread #'+tcount.to_s+' has finished!'
     }
   end
 # Fire up the threads
