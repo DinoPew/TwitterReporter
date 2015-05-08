@@ -1,0 +1,4 @@
+source 'http://rubygems.org'
+gem 'selenium-webdriver', '~> 2.45.0'
+gem 'highline', '~> 1.7.2'
+gem 'choice', '~> 0.2.0'

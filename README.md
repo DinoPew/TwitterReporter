@@ -1,2 +1,26 @@
 # TwitterReporter
 Reports twitter accounts from txt file
+
+## Install
+
+```shell
+gem install bundler
+git clone https://github.com/DinoPew/TwitterReporter.git
+cd path/to/TwitterReporter/
+bundle install
+```
+
+## Usage
+
+#### Basic:
+
+```shell
+# By default we get our targets from: https://ghostbin.com/paste/fgrfx/raw
+ruby -u Your_Twitter_Username
+```
+
+#### Advanced:
+
+```shell
+ruby -u Your_Twitter_Username -f ~/path/to/targets.txt
+```
