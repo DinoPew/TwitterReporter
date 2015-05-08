@@ -27,13 +27,13 @@ class TwitterReporter
   end
 
   # Get our targets from the specified path and return the contents
-  def get_targets(path)
-    puts 'Gathering Targets...'
+  def get_targets(path, logger)
+    logger.info 'Gathering Targets...'
     open(path) { |f| f.read }
   end
 
   # Run the reporter
-  def run (username, password, file_contents)
+  def run (username, password, file_contents, logger, reported, suspended, error)
     puts "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
@@ -47,16 +47,6 @@ class TwitterReporter
     passwd_field.send_keys password
     # Submit login form
     passwd_field.submit
-    # Create Log dir
-    FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
-    # Init loggers
-    reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
-    suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
-    error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
-    # Set log levels
-    reported.level = Logger::INFO
-    suspended.level = Logger::INFO
-    error.level = Logger::ERROR
     # Loop over our targets
     file_contents.each_line do |line|
       # Clean the target string
@@ -70,7 +60,7 @@ class TwitterReporter
         # Is the target suspended?
         if browser.current_url == 'https://twitter.com/account/suspended'
           # notify suspension
-          puts id + ' - Suspended'
+          logger.warn id + ' - Suspended'
           # Log suspension
           suspended.warn id
         else
@@ -87,13 +77,13 @@ class TwitterReporter
           # Click done
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-done-button']").click
           # Output the ID
-          puts id
+          logger.info id + ' - Reported'
           # Log the ID
           reported.info id
         end
       rescue
         # an error happened so notify
-        puts 'An error occured for ID: ' + id
+        logger.error id + ' - Error'
         # log the error
         error.error id
       end
@@ -127,10 +117,24 @@ Choice.options do
   end
 end
 
+# Create Log dir
+FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
+# Init loggers
+logger = Logger.new(STDOUT)
+reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
+suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
+error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
+# Set log levels
+logger.level = Logger::INFO
+reported.level = Logger::INFO
+suspended.level = Logger::INFO
+error.level = Logger::INFO
+
+
 # We need to disable SSL verification for windows, unless you install this cert: http://curl.haxx.se/ca/cacert.pem
 # If you install that cert you should comment the next 7 lines out
 if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https'])}\z/
-  puts 'WARNING: Running on Windows... We need to disable ssl to download our targets.'
+  logger.warn 'Running on Windows... We need to disable ssl to download our targets.'
   original_verbosity = $VERBOSE
   $VERBOSE = nil
   OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
@@ -140,4 +144,4 @@ end
 # Init our twitter reporter class
 tr = TwitterReporter.new
 # Run it
-tr.run(tr.get_username(Choice[:username]), tr.get_password, tr.get_targets(Choice[:file_path]))
+tr.run(tr.get_username(Choice[:username]), tr.get_password, tr.get_targets(Choice[:file_path], logger), logger, reported, suspended, error)
