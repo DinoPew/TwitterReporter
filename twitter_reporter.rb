@@ -145,7 +145,7 @@ tr = TwitterReporter.new
 # Get our targets from the specified path and return the contents
 puts 'Gathering Targets...'
 threads = []
-if Choice[:threads].to_s.strip.to_i.is_i?
+if Choice[:threads].to_s.strip.to_i.is_a? Integer
   open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
     # create our threads
     threads << Thread.new {
