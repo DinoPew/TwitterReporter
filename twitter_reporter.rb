@@ -72,7 +72,7 @@ class TwitterReporter
           # Click done
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-done-button']").click
           # Output the ID
-          puts id
+          logger.info 'Reported: ' + id
           # Log the ID
           reported.info id
         end
@@ -119,16 +119,6 @@ Choice.options do
   end
 end
 
-# We need to disable SSL verification for windows, unless you install this cert: http://curl.haxx.se/ca/cacert.pem
-# If you install that cert you should comment the next 7 lines out
-if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https'])}\z/
-  puts 'WARNING: Running on Windows... We need to disable ssl to download our targets.'
-  original_verbosity = $VERBOSE
-  $VERBOSE = nil
-  OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
-  $VERBOSE = original_verbosity
-end
-
 # Create Log dir
 FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
 # Init loggers
@@ -141,6 +131,18 @@ logger.level = Logger::INFO
 reported.level = Logger::INFO
 suspended.level = Logger::INFO
 error.level = Logger::INFO
+
+
+# We need to disable SSL verification for windows, unless you install this cert: http://curl.haxx.se/ca/cacert.pem
+# If you install that cert you should comment the next 7 lines out
+if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https'])}\z/
+  logger.warn 'Running on Windows... We need to disable ssl to download our targets.'
+  original_verbosity = $VERBOSE
+  $VERBOSE = nil
+  OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+  $VERBOSE = original_verbosity
+end
+
 
 # Make sure that threads are an int
 if Choice[:threads].to_s.strip.to_i.is_a? Integer
