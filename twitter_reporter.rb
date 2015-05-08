@@ -7,7 +7,20 @@ require 'openssl'
 require 'choice'
 require 'fileutils'
 require 'logger'
-require 'active_support/core_ext/array/grouping'
+
+class Array
+  def to_groups(x)
+    start = 0
+    size = (self.size() / Float(x)).ceil
+    while x > 0
+      yield self[start, size]
+      size = ((self.size() - 1 - start) / Float(x)).ceil
+      start += size
+      x -= 1
+    end
+  end
+end
+
 
 # The reporter class
 class TwitterReporter
@@ -145,7 +158,7 @@ tr = TwitterReporter.new
 # Get our targets from the specified path and return the contents
 puts 'Gathering Targets...'
 threads = []
-open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads], false).each do |chunk|
+open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.to_groups(Choice[:threads].to_i).each do |chunk|
   # create our threads
   threads << Thread.new {
     puts 'Starting new thread...'+"\n"
