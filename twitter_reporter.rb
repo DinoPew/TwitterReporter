@@ -33,7 +33,7 @@ class TwitterReporter
   end
 
   # Run the reporter
-  def run (username, password, file_contents)
+  def run (username, password, targets_file_contents)
     puts "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
@@ -58,7 +58,7 @@ class TwitterReporter
     suspended.level = Logger::INFO
     error.level = Logger::ERROR
     # Loop over our targets
-    file_contents.each_line do |line|
+    targets_file_contents.each_line do |line|
       # Clean the target string
       line = line.strip
       # Get the target ID
@@ -129,7 +129,7 @@ end
 
 # We need to disable SSL verification for windows, unless you install this cert: http://curl.haxx.se/ca/cacert.pem
 # If you install that cert you should comment the next 7 lines out
-if Gem.win_platform? && Config[:file_path] =~ URI::regexp
+if Gem.win_platform?
   puts 'WARNING: Running on Windows... We need to disable ssl to download our targets.'
   original_verbosity = $VERBOSE
   $VERBOSE = nil
