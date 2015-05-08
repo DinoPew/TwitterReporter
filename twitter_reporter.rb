@@ -129,29 +129,32 @@ if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https']
   $VERBOSE = original_verbosity
 end
 
-
-# Create Log dir
-FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
-# Init loggers
-reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
-suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
-error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
-# Set log levels
-reported.level = Logger::INFO
-suspended.level = Logger::INFO
-error.level = Logger::ERROR
-# Init our twitter reporter class
-tr = TwitterReporter.new
-# Get our targets from the specified path and return the contents
-puts 'Gathering Targets...'
-threads = []
+# Make sure that threads are an int
 if Choice[:threads].to_s.strip.to_i.is_a? Integer
+  # Create Log dir
+  FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
+# Init loggers
+  reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
+  suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
+  error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
+# Set log levels
+  reported.level = Logger::INFO
+  suspended.level = Logger::INFO
+  error.level = Logger::ERROR
+# Init our twitter reporter class
+  tr = TwitterReporter.new
+# Get Twitter account info
+  uname = tr.get_username(Choice[:username])
+  passwd = tr.get_password
+# Get our targets from the specified path and return the contents
+  threads = []
+  puts 'Gathering Targets...'
   open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
     # create our threads
     threads << Thread.new {
       puts 'Starting new thread...'+"\n"
       # Run it
-      tr.run(tr.get_username(Choice[:username]), tr.get_password, chunk, reported, suspended, error)
+      tr.run(uname, passwd, chunk, reported, suspended, error)
     }
   end
 # Fire up the threads
