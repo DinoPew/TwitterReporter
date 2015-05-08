@@ -28,8 +28,8 @@ class TwitterReporter
   end
 
   # Run the reporter
-  def run (username, password, file_contents, logger, reported, suspended, error, thread_id)
-    tname = '#' + thread_id.to_s
+  def run (username, password, file_contents, logger, reported, suspended, error)
+    tname = Thread.current.object_id.to_s
     logger.info '['+tname+']: Opening FireFox, Please Wait...'
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
@@ -155,15 +155,13 @@ if Choice[:threads].to_s.strip.to_i.is_a? Integer
 # Get our targets from the specified path and return the contents
   threads = []
   logger.info 'Gathering Targets...'
-  tcount = 0
-  open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
-    tcount = tcount + 1
+  logger.info "Starting #{Choice[:threads].to_s.strip} threads!"
+  open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].to_s.strip.to_i, false).each do |chunk|
     # create our threads
     threads << Thread.new {
-      logger.info 'Starting thread #'+tcount.to_s
       # Run it
-      tr.run(uname, passwd, chunk, logger, reported, suspended, error, tcount)
-      logger.info 'Thread #'+tcount.to_s+' has finished!'
+      tr.run(uname, passwd, chunk, logger, reported, suspended, error)
+      logger.info 'Thread has finished!'
     }
   end
 # Fire up the threads
