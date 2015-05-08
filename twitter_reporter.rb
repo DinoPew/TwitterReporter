@@ -1,12 +1,13 @@
 #!/usr/bin/env ruby
 
-require "selenium-webdriver"
+require 'selenium-webdriver'
 require 'highline/import'
 require 'open-uri'
 require 'openssl'
 require 'choice'
 require 'fileutils'
 require 'logger'
+require 'active_support/core_ext/array/grouping'
 
 # The reporter class
 class TwitterReporter
@@ -26,14 +27,8 @@ class TwitterReporter
     ask(prompt) { |q| q.echo = false }
   end
 
-  # Get our targets from the specified path and return the contents
-  def get_targets(path)
-    puts 'Gathering Targets...'
-    open(path) { |f| f.read }
-  end
-
   # Run the reporter
-  def run (username, password, file_contents)
+  def run (username, password, file_contents, reported, suspended, error)
     puts "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
@@ -47,18 +42,8 @@ class TwitterReporter
     passwd_field.send_keys password
     # Submit login form
     passwd_field.submit
-    # Create Log dir
-    FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
-    # Init loggers
-    reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
-    suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
-    error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
-    # Set log levels
-    reported.level = Logger::INFO
-    suspended.level = Logger::INFO
-    error.level = Logger::ERROR
     # Loop over our targets
-    file_contents.each_line do |line|
+    file_contents.each do |line|
       # Clean the target string
       line = line.strip
       # Get the target ID
@@ -120,6 +105,13 @@ Choice.options do
     default 'https://ghostbin.com/paste/fgrfx/raw'
   end
 
+  option :threads do
+    short '-t'
+    long '--threads=THREADS'
+    desc 'The number of threads to run. This will open multiple browser windows.'
+    default 1
+  end
+
   option :help do
     short '-h'
     long '--help'
@@ -137,7 +129,29 @@ if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https']
   $VERBOSE = original_verbosity
 end
 
+
+# Create Log dir
+FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
+# Init loggers
+reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
+suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
+error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
+# Set log levels
+reported.level = Logger::INFO
+suspended.level = Logger::INFO
+error.level = Logger::ERROR
 # Init our twitter reporter class
 tr = TwitterReporter.new
-# Run it
-tr.run(tr.get_username(Choice[:username]), tr.get_password, tr.get_targets(Choice[:file_path]))
+# Get our targets from the specified path and return the contents
+puts 'Gathering Targets...'
+threads = []
+open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads], false).each do |chunk|
+  # create our threads
+  threads << Thread.new {
+    puts 'Starting new thread...'+"\n"
+    # Run it
+    tr.run(tr.get_username(Choice[:username]), tr.get_password, chunk, reported, suspended, error)
+  }
+end
+# Fire up the threads
+threads.each { |thr| thr.join }
