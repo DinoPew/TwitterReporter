@@ -34,7 +34,7 @@ class TwitterReporter
 
   # Run the reporter
   def run (username, password, file_contents, logger, reported, suspended, error)
-    puts "Opening FireFox, Please Wait..."
+    logger.info "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
     # Go to twitter
