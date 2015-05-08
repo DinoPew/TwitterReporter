@@ -33,7 +33,7 @@ class TwitterReporter
   end
 
   # Run the reporter
-  def run (username, password, targets_file_contents)
+  def run (username, password, file_contents)
     puts "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
@@ -58,7 +58,7 @@ class TwitterReporter
     suspended.level = Logger::INFO
     error.level = Logger::ERROR
     # Loop over our targets
-    targets_file_contents.each_line do |line|
+    file_contents.each_line do |line|
       # Clean the target string
       line = line.strip
       # Get the target ID
