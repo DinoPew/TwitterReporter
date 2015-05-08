@@ -16,11 +16,11 @@ bundle install
 
 ```shell
 # By default we get our targets from: https://ghostbin.com/paste/fgrfx/raw
-ruby -u Your_Twitter_Username
+ruby twitter_reporter.rb -u Your_Twitter_Username
 ```
 
 #### Advanced:
 
 ```shell
-ruby -u Your_Twitter_Username -f ~/path/to/targets.txt
+ruby twitter_reporter.rb -u Your_Twitter_Username -f ~/path/to/targets.txt
 ```

@@ -80,10 +80,10 @@ class TwitterReporter
           browser.find_element(:css, '.user-dropdown').click
           # Click report
           browser.find_element(:css, 'li.report-text button[type="button"]').click
-          sleep(2)
+          sleep(3)
           # Click next
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-next-button']").click
-          sleep(1)
+          sleep(2)
           # Click done
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-done-button']").click
           # Output the ID
