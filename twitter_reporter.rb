@@ -72,13 +72,13 @@ class TwitterReporter
           # Click done
           browser.find_element(:xpath, "//button[@class='btn primary-btn new-report-flow-done-button']").click
           # Output the ID
-          logger.info 'Reported: ' + id
+          logger.info id + ' - Reported'
           # Log the ID
           reported.info id
         end
       rescue
         # an error happened so notify
-        logger.error 'An error occured for ID: ' + id
+        logger.error id + ' - Error'
         # log the error
         error.error id
       end
