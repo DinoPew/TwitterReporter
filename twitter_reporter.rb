@@ -160,6 +160,7 @@ if Choice[:threads].to_s.strip.to_i.is_a? Integer
       logger.info 'Starting new thread...'
       # Run it
       tr.run(uname, passwd, chunk, logger, reported, suspended, error)
+      logger.info 'Thread has finished!'
     }
   end
 # Fire up the threads
