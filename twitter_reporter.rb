@@ -28,8 +28,8 @@ class TwitterReporter
   end
 
   # Run the reporter
-  def run (username, password, file_contents, reported, suspended, error)
-    puts "Opening FireFox, Please Wait..."
+  def run (username, password, file_contents, logger, reported, suspended, error)
+    logger.info "Opening FireFox, Please Wait..."
     # Init WebDriver
     browser = Selenium::WebDriver.for :firefox
     # Go to twitter
@@ -55,7 +55,7 @@ class TwitterReporter
         # Is the target suspended?
         if browser.current_url == 'https://twitter.com/account/suspended'
           # notify suspension
-          puts id + ' - Suspended'
+          logger.warn id + ' - Suspended'
           # Log suspension
           suspended.warn id
         else
@@ -78,7 +78,7 @@ class TwitterReporter
         end
       rescue
         # an error happened so notify
-        puts 'An error occured for ID: ' + id
+        logger.error 'An error occured for ID: ' + id
         # log the error
         error.error id
       end
@@ -129,18 +129,21 @@ if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['http', 'https']
   $VERBOSE = original_verbosity
 end
 
+# Create Log dir
+FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
+# Init loggers
+logger = Logger.new(STDOUT)
+reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
+suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
+error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
+# Set log levels
+logger.level = Logger::INFO
+reported.level = Logger::INFO
+suspended.level = Logger::INFO
+error.level = Logger::INFO
+
 # Make sure that threads are an int
 if Choice[:threads].to_s.strip.to_i.is_a? Integer
-  # Create Log dir
-  FileUtils.mkdir_p(File.expand_path File.dirname(__FILE__)+'/log')
-# Init loggers
-  reported = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/reported-'+Time.now.to_i.to_s+'.log')
-  suspended = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/suspended-'+Time.now.to_i.to_s+'.log')
-  error = Logger.new(File.expand_path File.dirname(__FILE__)+'/log/error-'+Time.now.to_i.to_s+'.log')
-# Set log levels
-  reported.level = Logger::INFO
-  suspended.level = Logger::INFO
-  error.level = Logger::ERROR
 # Init our twitter reporter class
   tr = TwitterReporter.new
 # Get Twitter account info
@@ -148,17 +151,17 @@ if Choice[:threads].to_s.strip.to_i.is_a? Integer
   passwd = tr.get_password
 # Get our targets from the specified path and return the contents
   threads = []
-  puts 'Gathering Targets...'
+  logger.info 'Gathering Targets...'
   open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
     # create our threads
     threads << Thread.new {
-      puts 'Starting new thread...'+"\n"
+      logger.info 'Starting new thread...'
       # Run it
-      tr.run(uname, passwd, chunk, reported, suspended, error)
+      tr.run(uname, passwd, chunk, logger, reported, suspended, error)
     }
   end
 # Fire up the threads
   threads.each { |thr| thr.join }
 else
-  puts 'Thread value must be an Integer'
+  logger.error 'Thread value must be an Integer'
 end
