@@ -1,5 +1,5 @@
 # TwitterReporter
-Reports twitter accounts from txt file
+Reports twitter accounts.
 
 ## Install
 
