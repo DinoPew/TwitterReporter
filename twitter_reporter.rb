@@ -129,7 +129,7 @@ end
 
 # We need to disable SSL verification for windows, unless you install this cert: http://curl.haxx.se/ca/cacert.pem
 # If you install that cert you should comment the next 7 lines out
-if Gem.win_platform?
+if Gem.win_platform? && Choice[:file_path] =~ /\A#{URI::regexp(['https'])}\z/
   puts 'WARNING: Running on Windows... We need to disable ssl to download our targets.'
   original_verbosity = $VERBOSE
   $VERBOSE = nil
