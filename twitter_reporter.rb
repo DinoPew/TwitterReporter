@@ -145,13 +145,17 @@ tr = TwitterReporter.new
 # Get our targets from the specified path and return the contents
 puts 'Gathering Targets...'
 threads = []
-open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads], false).each do |chunk|
-  # create our threads
-  threads << Thread.new {
-    puts 'Starting new thread...'+"\n"
-    # Run it
-    tr.run(tr.get_username(Choice[:username]), tr.get_password, chunk, reported, suspended, error)
-  }
-end
+if Choice[:threads].to_s.strip.to_i.is_i?
+  open(Choice[:file_path]) { |f| f.read }.split("\n").to_ary.in_groups(Choice[:threads].strip.to_i, false).each do |chunk|
+    # create our threads
+    threads << Thread.new {
+      puts 'Starting new thread...'+"\n"
+      # Run it
+      tr.run(tr.get_username(Choice[:username]), tr.get_password, chunk, reported, suspended, error)
+    }
+  end
 # Fire up the threads
-threads.each { |thr| thr.join }
+  threads.each { |thr| thr.join }
+else
+  puts 'Thread value must be an Integer'
+end
