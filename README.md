@@ -14,7 +14,8 @@ Reports twitter accounts.
 * Install [Ruby](https://chocolatey.org/packages/ruby), [Git](https://chocolatey.org/packages/git), [GitBash](https://chocolatey.org/packages/git.install)
 
 ```shell
-choco install ruby -v 2.1.5 git git.install -y
+choco install ruby --version 2.1.5 -y
+choco install git git.install -y
 ```
 
 * Install TwitterReporter, Open GitBash:
